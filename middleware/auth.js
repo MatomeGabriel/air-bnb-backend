@@ -1,6 +1,6 @@
-exports.signup = async (req, resizeBy, next) => {
+exports.signup = async (req, res, next) => {
   req.status(404).json({
-    status: "fail",
-    message: "User not defined",
+    status: 'fail',
+    message: 'User not defined',
   });
 };
