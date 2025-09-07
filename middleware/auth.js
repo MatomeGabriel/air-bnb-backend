@@ -1,6 +1,215 @@
-exports.signup = async (req, res, next) => {
-  req.status(404).json({
-    status: 'fail',
-    message: 'User not defined',
+const jwt = require('jsonwebtoken');
+const { promisify } = require('util');
+
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
+const User = require('../models/User');
+const { getOne } = require('../controllers/handleFactory');
+
+// Returns a signed jwt token
+const signToken = (id) =>
+  jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+
+// Creates the token and send it back
+const createAndSendToken = (user, statusCode, res) => {
+  const token = signToken(user._id);
+
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() +
+        Number(process.env.JWT_COOKIE_EXPIRES_IN) * 24 * 60 * 60 * 1000,
+    ),
+    httpOnly: true,
+  };
+
+  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+  // We need to send the jwt as a cookie, no saving in the local storage
+  res.cookie('jwt', token, cookieOptions);
+  // We do not want to send the password back
+  user.password = undefined;
+  res.status(statusCode).json({
+    status: 'success',
+    token,
+    data: { user },
   });
 };
+
+// Signup function to create a new user
+// This function will be used to create a new user
+// It will also set the role of the user based on the request
+
+exports.signUp = catchAsync(async (req, res, next) => {
+  // Creates a new user
+  console.log(req.body);
+  console.log(req.tempUserId);
+  const newUser = await User.create({
+    // ...(req.tempUserId && { _id: req.tempUserId }),
+    name: req.body.name,
+    email: req.body.email,
+    username: req.body.username,
+    password: req.body.password,
+    passwordConfirm: req.body.passwordConfirm,
+    role: req.body.role,
+    // photo: req.body.photo,
+  });
+
+  console.log(newUser);
+
+  createAndSendToken(newUser, 201, res);
+});
+
+// To Login Users
+exports.login = catchAsync(async (req, res, next) => {
+  const { username, password } = req.body;
+  console.log(username);
+  // 1. Check if password or email was provided
+  // if no password or email, bad request, invalid data
+  if (!username || !password) {
+    return next(new AppError('Please provide email and password', 400));
+  }
+
+  // 2. Check if the user exist and if the password is correct
+  // Get our user based on the email, and enable the password field
+  const user = await User.findOne({ username }).select('+password');
+
+  //  use does not exist or password is wrong, user failed t authenticate
+  if (!user || !(await user.correctPassword(password, user.password))) {
+    return next(new AppError('Incorrect email or password', 401));
+  }
+
+  // 3. If everything is okay, send token to the client
+
+  createAndSendToken(user, 200, res);
+});
+
+// To set the role of the user
+// THis middleware is used to set roles, roles can either be user or host
+exports.setRole = (role) => (req, res, next) => {
+  if (!req.body)
+    return next(new AppError('Please provide necessary data', 400));
+
+  // Set the role
+  req.body.role = role;
+  next();
+};
+
+exports.protect = catchAsync(async (req, res, next) => {
+  // This function will be used to protect the routes
+  // It will check if the user is authenticated
+  // If the user is authenticated, it will set the user object on the request
+  // If the user is not authenticated, it will return an error
+  // we can then use this user on other routes
+
+  let token;
+  if (
+    req.headers?.authorization &&
+    req.headers.authorization.startsWith('Bearer') &&
+    req.headers.authorization.split(' ')[1]
+  ) {
+    token = req.headers.authorization.split(' ')[1];
+    console.log('Token', token);
+    // send by cookies
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
+  }
+
+  if (!token)
+    return next(
+      new AppError('You are not logged in! Please login to gain access', 401),
+    );
+
+  // we get the decoded data
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
+  // get the current user
+
+  const currentUser = await User.findById(decoded.id);
+  if (!currentUser)
+    return next(
+      new AppError('he user belonging to the token does no longer exist.', 401),
+    );
+
+  // we put our user on the request object to be used by the subsequent middleware
+
+  req.user = currentUser;
+  next();
+});
+
+exports.logout = (req, res) => {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+
+  res.status(200).json({
+    status: 'success',
+  });
+};
+// to restrict users based on their roles
+exports.restrictTo =
+  (...roles) =>
+  (req, res, next) => {
+    console.log(req.user.role);
+    // checks if user role is allowed t perform the subsequent action in the middleware
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError('You do not have permission to perform this action', 403),
+      );
+    }
+
+    next();
+  };
+
+// sets the user host id
+exports.setHostId = (req, res, next) => {
+  req.body.host_id = req.user._id;
+  next();
+};
+
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user._id;
+  next();
+};
+
+exports.getUser = getOne(User);
+
+exports.updateUserImage = catchAsync(async (req, res, next) => {
+  // 1. cleanup prev images
+  console.log('Tried to update');
+  console.log('The User is', req.body.photo);
+  // 2. update the image
+  const updatedDoc = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      photo: req.body.photo,
+    },
+    { new: true, runValidators: true },
+  ).select('-_id');
+
+  // 3. send back the data not token, (the imgae)
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: updatedDoc,
+    },
+  });
+});
+
+exports.getHost = catchAsync(async (req, res, next) => {
+  const { host_id } = req.params;
+  console.log(host_id);
+  console.log('Fetching data');
+  const doc = await User.findById(host_id).select(
+    '-email -password -username -__v',
+  );
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: doc,
+    },
+  });
+});

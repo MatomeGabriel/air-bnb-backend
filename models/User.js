@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
+const bcrypt = require('bcrypt');
 
+// This is our User Schema
 const userSchema = new mongoose.Schema({
   name: { type: String, required: [true, 'Please tell us your name.'] },
   email: {
@@ -10,7 +12,15 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     validate: [validator.isEmail, 'Please provide a valid email'],
   },
-  photo: String,
+  username: {
+    type: String,
+    unique: true,
+    required: [true, 'Please give us your username'],
+  },
+  photo: {
+    type: String,
+    default: 'uploads/defaults/default.jpg',
+  },
   role: {
     type: String,
     enum: {
@@ -36,3 +46,36 @@ const userSchema = new mongoose.Schema({
     },
   },
 });
+
+// this is for the password encryption
+// We use the document middleware to encrypt our password
+// right before we save or create our document
+userSchema.pre('save', async function (next) {
+  // only run if the password was actually modified
+  if (!this.isModified('password')) {
+    return next();
+  }
+
+  try {
+    this.password = await bcrypt.hash(this.password, 12);
+    // reset the password confirm to undefined
+    this.passwordConfirm = undefined;
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Static/Instance method for password comparison
+
+// --------- Explain it well
+userSchema.methods.correctPassword = async function (
+  candidatePassword,
+  userPassword,
+) {
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+// This is our User Model
+const User = mongoose.model('User', userSchema);
+module.exports = User;

@@ -2,11 +2,11 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
 // when we have a bug or errors in our syncronous code that was not caught anywhere
-process.on('uncaughtException', (err) => {
-  console.log('UNHANDLED EXCEPTION! 💥 Shutting down...');
-  console.log(err.name, err.message);
-  process.exit(1);
-});
+// process.on('uncaughtException', (err) => {
+//   console.log('UNHANDLED EXCEPTION! 💥 Shutting down...');
+//   console.log(err.name, err.message);
+//   process.exit(1);
+// });
 
 // 1) Configure our dot env
 dotenv.config({ path: './config.env' });
