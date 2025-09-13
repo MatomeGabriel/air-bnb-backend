@@ -5,9 +5,6 @@ const reservationMiddleware = require('../middleware/reservationMiddleware');
 
 const router = express.Router();
 
-router.route('/host').get(reservationController.getHostReservations);
-router.route('/user').get(reservationController.getUserReservations);
-
 // when creating the reservation you must b
 /**
  * 1. logged in - get the id from the cookie,
@@ -18,14 +15,21 @@ router.route('/user').get(reservationController.getUserReservations);
  */
 
 router.use(auth.protect);
+
 router
   .route('/')
+  .get(reservationMiddleware.setQueryId, reservationController.getReservations)
   .post(
     reservationMiddleware.appendUserId,
     reservationController.createReservation,
   );
 
 // Delete an accommodation based on the ID
-router('/:id').delete(reservationController.deleteReservation);
+router
+  .route('/:id')
+  .delete(
+    reservationMiddleware.setQueryId,
+    reservationController.deleteReservation,
+  );
 
 module.exports = router;
