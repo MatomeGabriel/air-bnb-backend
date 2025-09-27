@@ -75,3 +75,35 @@ exports.getAllHostAccommodations = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+exports.getLocationsSummary = catchAsync(async (req, res, next) => {
+  // Aggregate Pipeline
+  const doc = await Accommodation.aggregate([
+    {
+      $group: {
+        _id: null,
+        locations: { $addToSet: '$location' },
+        maxGuest: { $max: '$maxGuests' },
+        minGuest: { $min: '$maxGuests' },
+        type: { $addToSet: '$type' },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        locations: 1,
+        maxGuest: 1,
+        minGuest: 1,
+        type: 1,
+      },
+    },
+  ]);
+
+  // Response
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: doc,
+    },
+  });
+});

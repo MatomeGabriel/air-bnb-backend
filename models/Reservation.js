@@ -73,6 +73,7 @@ const reservationSchema = new mongoose.Schema(
       immutable: true,
     },
     user: String,
+    username: String,
     weeklyDiscount: Number,
     cleaningFee: Number,
     serviceFee: Number,

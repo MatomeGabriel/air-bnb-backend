@@ -9,6 +9,9 @@ exports.appendUserId = catchAsync(async (req, res, next) => {
   if (!req.user) return next(new AppError('Please signup', 400));
 
   req.body.user_id = req.user._id;
+  req.body.user = req.user.name;
+  req.body.username = req.user.username;
+
   next();
 });
 
@@ -36,3 +39,5 @@ exports.setQueryId = catchAsync(async (req, res, next) => {
   console.log('The req.queryId is: ', req.queryId);
   next();
 });
+
+exports.isReservationAvailable = catchAsync(async (req, res, next) => {});

@@ -19,10 +19,12 @@ exports.getOne = (Model) =>
 
 exports.getAll = (Model) =>
   catchAsync(async (req, res, next) => {
+    console.log(req.query);
     const features = new APIFeatures(
       Model.find(req.queryId),
       req.query,
     ).filter();
+
     const docs = await features.query;
 
     // const accommodations = Acc

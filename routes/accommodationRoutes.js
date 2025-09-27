@@ -37,6 +37,7 @@ router.get('/:id', accommodationController.getAccommodation);
 //  Get a single accommodation
 // Delete an accommodation based on the ID
 
+router.get('/locations/summary', accommodationController.getLocationsSummary);
 /**
  * Protects all the routes
  */
