@@ -1,3 +1,7 @@
+/**
+ * User Routes
+ * Defines RESTful routes for user authentication, profile management, and account operations.
+ */
 const express = require('express');
 
 // middleware for authentication and authorization

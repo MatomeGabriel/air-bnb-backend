@@ -1,5 +1,9 @@
-// This is our accommodation Controller
-// This interact with with our database
+/**
+/**
+ * Accommodation Controller
+ * Handles CRUD operations and image management for accommodations.
+ * Uses factory functions for standard operations and custom logic for image deletion and host-specific listings.
+ */
 
 const Accommodation = require('../models/Accommodation');
 const APIFeatures = require('../utils/apiFeatures');
@@ -9,28 +13,57 @@ const { deleteFiles } = require('../utils/fsHelper');
 const factory = require('./handleFactory');
 
 // Place our controllers into an exports object
+/**
+ * Get all accommodations
+ * @route GET /api/accommodations
+ */
 exports.getAllAccommodations = factory.getAll(Accommodation);
 
+/**
+ * Get a single accommodation by ID
+ * @route GET /api/accommodations/:id
+ */
 exports.getAccommodation = factory.getOne(Accommodation);
 
+/**
+ * Create a new accommodation
+ * @route POST /api/accommodations
+ */
 exports.createAccommodation = factory.createOne(Accommodation);
 
+/**
+ * Update an accommodation by ID
+ * @route PATCH /api/accommodations/:id
+ */
 exports.updateAccommodation = factory.updateOne(Accommodation);
+
+/**
+ * Delete an accommodation by ID
+ * @route DELETE /api/accommodations/:id
+ */
 exports.deleteAccommodation = factory.deleteOne(Accommodation);
 
+/**
+ * Delete all images for an accommodation
+ * @route DELETE /api/accommodations/:id/images
+ */
 exports.deleteAccommodationImages = catchAsync(async (req, res, next) => {
   const accommodation = await Accommodation.findById(req.params.id);
   if (!accommodation) return next();
   const { images = [] } = accommodation;
 
-  console.log(images);
+  // ...existing code...
   if (images.length > 0) {
     await deleteFiles(images);
   }
-  console.log('Successfully deleted');
+  // ...existing code...
   next();
 });
 
+/**
+ * Remove a single image from an accommodation
+ * @route PATCH /api/accommodations/:id/images
+ */
 exports.removeAccommodationImage = catchAsync(async (req, res, next) => {
   const accommodation = await Accommodation.findOneAndUpdate(
     {
@@ -56,6 +89,10 @@ exports.removeAccommodationImage = catchAsync(async (req, res, next) => {
   });
 });
 
+/**
+ * Get all accommodations for the current host
+ * @route GET /api/accommodations/host/listings
+ */
 exports.getAllHostAccommodations = catchAsync(async (req, res, next) => {
   // build a query
   const features = new APIFeatures(

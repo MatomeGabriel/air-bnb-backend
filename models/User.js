@@ -1,3 +1,7 @@
+/**
+ * User Model
+ * Defines the schema for users, including authentication, profile, and role information.
+ */
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');

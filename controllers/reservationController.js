@@ -3,10 +3,22 @@ const Reservation = require('../models/Reservation');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 
+/**
+ * Create a new reservation
+ * @route POST /api/reservations
+ */
 exports.createReservation = factory.createOne(Reservation);
 
+/**
+ * Get all reservations
+ * @route GET /api/reservations
+ */
 exports.getReservations = factory.getAll(Reservation);
 
+/**
+ * Delete a reservation by ID
+ * @route DELETE /api/reservations/:id
+ */
 exports.deleteReservation = catchAsync(async (req, res, next) => {
   const query = { _id: req.params.id };
 

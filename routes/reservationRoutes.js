@@ -1,3 +1,7 @@
+/**
+ * Reservation Routes
+ * Defines RESTful routes for reservation CRUD operations and host/user-specific queries.
+ */
 const express = require('express');
 const auth = require('../middleware/auth');
 const reservationController = require('../controllers/reservationController');

@@ -1,3 +1,7 @@
+/**
+ * Accommodation Routes
+ * Defines RESTful routes for accommodation CRUD operations and image management.
+ */
 const express = require('express');
 
 const accommodationController = require('../controllers/accommodationController');

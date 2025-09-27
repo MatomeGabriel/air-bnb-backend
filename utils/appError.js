@@ -1,4 +1,8 @@
 // Custom Error
+/**
+ * AppError Utility
+ * Custom error class for operational errors, used for consistent error handling across the app.
+ */
 class AppError extends Error {
   constructor(message, statusCode) {
     super(message);

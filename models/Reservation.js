@@ -1,3 +1,7 @@
+/**
+ * Reservation Model
+ * Defines the schema for reservations, including user, accommodation, dates, and status.
+ */
 const mongoose = require('mongoose');
 
 const reservationSchema = new mongoose.Schema(

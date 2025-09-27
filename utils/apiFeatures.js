@@ -1,3 +1,7 @@
+/**
+ * APIFeatures Utility
+ * Provides filtering, sorting, and pagination for Mongoose queries based on request parameters.
+ */
 class APIFeatures {
   constructor(query, queryString) {
     this.query = query;

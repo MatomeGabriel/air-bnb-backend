@@ -1,3 +1,7 @@
+/**
+ * Accommodation Model
+ * Defines the schema for accommodation listings, including host, location, amenities, images, and pricing.
+ */
 const mongoose = require('mongoose');
 /**
  * Accommodation Schema

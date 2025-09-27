@@ -3,6 +3,11 @@ const APIFeatures = require('../utils/apiFeatures');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 
+/**
+ * Factory function to get a single document by ID
+ * @param {Model} Model - Mongoose model
+ * @returns {Function} Express middleware
+ */
 exports.getOne = (Model) =>
   catchAsync(async (req, res, next) => {
     const doc = await Model.findById(req.params.id);
@@ -17,9 +22,14 @@ exports.getOne = (Model) =>
     });
   });
 
+/**
+ * Factory function to get all documents
+ * @param {Model} Model - Mongoose model
+ * @returns {Function} Express middleware
+ */
 exports.getAll = (Model) =>
   catchAsync(async (req, res, next) => {
-    console.log(req.query);
+    // ...existing code...
     const features = new APIFeatures(
       Model.find(req.queryId),
       req.query,
@@ -37,6 +47,11 @@ exports.getAll = (Model) =>
     });
   });
 
+/**
+ * Factory function to create a new document
+ * @param {Model} Model - Mongoose model
+ * @returns {Function} Express middleware
+ */
 exports.createOne = (Model) =>
   catchAsync(async (req, res, next) => {
     let doc;
@@ -45,7 +60,10 @@ exports.createOne = (Model) =>
      * Else allow mongoose to create one automatically
      */
     if (req.tempAccId) {
-      doc = await Model.create({ _id: req.tempAccId, ...req.body });
+      // Node.js <8.3.0 does not support object spread, use Object.assign
+      // Node.js <8.3.0 does not support object spread, use Object.assign
+      const data = Object.assign({ _id: req.tempAccId }, req.body);
+      doc = await Model.create(data);
     } else {
       doc = await Model.create(req.body);
     }
@@ -58,6 +76,11 @@ exports.createOne = (Model) =>
     });
   });
 
+/**
+ * Factory function to update a document by ID
+ * @param {Model} Model - Mongoose model
+ * @returns {Function} Express middleware
+ */
 exports.updateOne = (Model) =>
   catchAsync(async (req, res, next) => {
     let updatedDoc;
@@ -100,6 +123,11 @@ exports.updateOne = (Model) =>
     });
   });
 
+/**
+ * Factory function to delete a document by ID
+ * @param {Model} Model - Mongoose model
+ * @returns {Function} Express middleware
+ */
 exports.deleteOne = (Model) =>
   catchAsync(async (req, res, next) => {
     // 1)
