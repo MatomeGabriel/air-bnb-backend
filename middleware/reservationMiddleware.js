@@ -36,7 +36,7 @@ exports.setQueryId = catchAsync(async (req, res, next) => {
   if (req.user.role === 'host') req.queryId = { host_id: req.user._id };
 
   if (req.user.role === 'user') req.queryId = { user_id: req.user._id };
-  console.log('The req.queryId is: ', req.queryId);
+
   next();
 });
 

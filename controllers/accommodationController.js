@@ -9,6 +9,7 @@ const Accommodation = require('../models/Accommodation');
 const APIFeatures = require('../utils/apiFeatures');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
+const deleteAccommodationFolder = require('../utils/deleteAccomodationFolder');
 const { deleteFiles } = require('../utils/fsHelper');
 const factory = require('./handleFactory');
 
@@ -55,6 +56,7 @@ exports.deleteAccommodationImages = catchAsync(async (req, res, next) => {
   // ...existing code...
   if (images.length > 0) {
     await deleteFiles(images);
+    await deleteAccommodationFolder(`uploads/accommodations/${req.params.id}`);
   }
   // ...existing code...
   next();

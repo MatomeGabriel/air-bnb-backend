@@ -1,25 +1,34 @@
+/**
+ * Entry point for the backend server.
+ * - Loads environment variables
+ * - Connects to MongoDB
+ * - Starts Express server
+ * - Handles unhandled promise rejections
+ */
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
-// when we have a bug or errors in our syncronous code that was not caught anywhere
-// process.on('uncaughtException', (err) => {
-//   console.log('UNHANDLED EXCEPTION! 💥 Shutting down...');
-//   console.log(err.name, err.message);
-//   process.exit(1);
-// });
-
-// 1) Configure our dot env
+/**
+ * Load environment variables from config.env file
+ */
 dotenv.config({ path: './config.env' });
 
-// 2) Call our APP
+/**
+ * Import Express app instance
+ */
 const app = require('./app');
 
-//3) Connect to our mongodb database
+/**
+ * Build MongoDB connection string from environment variables
+ */
 const DB = process.env.DATABASE.replace(
   '<PASSWORD>',
   process.env.DATABASE_PASSWORD,
 );
 
+/**
+ * Connect to MongoDB using Mongoose
+ */
 mongoose
   .connect(DB)
   .then(() => {
@@ -27,18 +36,20 @@ mongoose
   })
   .catch((err) => console.log(err));
 
-// Run our server
+/**
+ * Start Express server on configured port
+ */
 const port = process.env.PORT || 8000;
-// const server =
 const server = app.listen(port, () => {
   console.log(`Server listening on port ${port}....`);
 });
 
-// Async exceptions, async logic failed without recovery
+/**
+ * Handle unhandled promise rejections to gracefully shut down the server
+ */
 process.on('unhandledRejection', (err) => {
   console.log('UNHANDLED REJECTION! 🔥 Shutting down...');
   console.log(err.name, err.message);
-
   server.close(() => {
     process.exit(1);
   });

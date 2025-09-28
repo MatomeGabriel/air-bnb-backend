@@ -1,0 +1,9 @@
+feat: add image and folder cleanup utilities, improve accommodation and user image management
+
+- Added utils/deleteAccomodationFolder.js to support deleting accommodation folders and contents
+- Added utils/deleteUnmatchedImages.js to clean up unused user images after update
+- Integrated folder and image cleanup into accommodation and user controllers
+- Improved error handling and removed debug logs from middleware
+- Updated CORS config to use CLIENT_ORIGIN from environment
+- Added compression middleware for better performance
+- Enhanced documentation and code comments throughout backend

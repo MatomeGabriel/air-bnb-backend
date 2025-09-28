@@ -5,6 +5,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const User = require('../models/User');
 const { getOne } = require('../controllers/handleFactory');
+const deleteUnmatchedImages = require('../utils/deleteUnmatchedImages');
 
 // Returns a signed jwt token
 const signToken = (id) =>
@@ -42,8 +43,7 @@ const createAndSendToken = (user, statusCode, res) => {
 
 exports.signUp = catchAsync(async (req, res, next) => {
   // Creates a new user
-  console.log(req.body);
-  console.log(req.tempUserId);
+
   const newUser = await User.create({
     // ...(req.tempUserId && { _id: req.tempUserId }),
     name: req.body.name,
@@ -55,15 +55,13 @@ exports.signUp = catchAsync(async (req, res, next) => {
     // photo: req.body.photo,
   });
 
-  console.log(newUser);
-
   createAndSendToken(newUser, 201, res);
 });
 
 // To Login Users
 exports.login = catchAsync(async (req, res, next) => {
   const { username, password } = req.body;
-  console.log(username);
+
   // 1. Check if password or email was provided
   // if no password or email, bad request, invalid data
   if (!username || !password) {
@@ -109,7 +107,7 @@ exports.protect = catchAsync(async (req, res, next) => {
     req.headers.authorization.split(' ')[1]
   ) {
     token = req.headers.authorization.split(' ')[1];
-    console.log('Token', token);
+
     // send by cookies
   } else if (req.cookies.jwt) {
     token = req.cookies.jwt;
@@ -151,7 +149,6 @@ exports.logout = (req, res) => {
 exports.restrictTo =
   (...roles) =>
   (req, res, next) => {
-    console.log(req.user.role);
     // checks if user role is allowed t perform the subsequent action in the middleware
     if (!roles.includes(req.user.role)) {
       return next(
@@ -177,8 +174,7 @@ exports.getUser = getOne(User);
 
 exports.updateUserImage = catchAsync(async (req, res, next) => {
   // 1. cleanup prev images
-  console.log('Tried to update');
-  console.log('The User is', req.body.photo);
+
   // 2. update the image
   const updatedDoc = await User.findByIdAndUpdate(
     req.user._id,
@@ -188,8 +184,12 @@ exports.updateUserImage = catchAsync(async (req, res, next) => {
     { new: true, runValidators: true },
   ).select('-_id');
 
-  // 3. send back the data not token, (the imgae)
+  // do the cleanup of all the images except the current one
+  console.log('Photo', req.body.photo);
 
+  await deleteUnmatchedImages(req.body.photo);
+
+  // 3. send back the data not token, (the image is public data)
   res.status(200).json({
     status: 'success',
     data: {
@@ -200,8 +200,7 @@ exports.updateUserImage = catchAsync(async (req, res, next) => {
 
 exports.getHost = catchAsync(async (req, res, next) => {
   const { host_id } = req.params;
-  console.log(host_id);
-  console.log('Fetching data');
+
   const doc = await User.findById(host_id).select(
     '-email -password -username -__v',
   );

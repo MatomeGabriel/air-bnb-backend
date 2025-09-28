@@ -7,6 +7,7 @@ const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const fsHelper = require('../utils/fsHelper');
 const Accommodation = require('../models/Accommodation');
+const deleteAccommodationFolder = require('../utils/deleteAccomodationFolder');
 
 /**
  * Create memory storage to save our images on memory

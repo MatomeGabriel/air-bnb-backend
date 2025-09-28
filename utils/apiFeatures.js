@@ -25,11 +25,11 @@ class APIFeatures {
   //     /\b(gte|gt|lte|lt)\b/g,
   //     (match) => `$${match}`,
   //   );
-  //   console.log(queryString);
+  //
 
   //   // over ride our initial query
   //   this.query = this.query.find(JSON.parse(queryString));
-  //   // console.log(this.query);
+  //
   //   return this;
   // }
 
@@ -54,7 +54,7 @@ class APIFeatures {
   //     return acc;
   //   }, {});
 
-  //   console.log(mongoFilter);
+  //
   //   this.query = this.query.find(mongoFilter);
   //   return this;
   // }

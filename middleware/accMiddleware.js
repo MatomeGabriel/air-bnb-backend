@@ -38,7 +38,6 @@ exports.isAccommodationAvailable = catchAsync(async (req, res, next) => {
 exports.stripImagesFromBody = (req, res, next) => {
   if ('images' in req.body) {
     delete req.body.images;
-    console.log('🗑️ Removed req.body.images');
   }
   next();
 };
@@ -46,7 +45,6 @@ exports.stripImagesFromBody = (req, res, next) => {
 exports.stripLocationFromBody = (req, res, next) => {
   if ('location' in req.body) {
     delete req.body.location;
-    console.log('🗑️ Removed req.body.location');
   }
   next();
 };
