@@ -37,3 +37,4 @@ coverage/
 commit-msg.txt
 serviceAccountKey.json
 ignore.json
+config.env
