@@ -80,7 +80,6 @@ router
   )
   .delete(
     accMiddleware.isAccommodationAvailable,
-    mediaUpload.deleteAccommodationImage,
     accommodationController.removeAccommodationImage,
   );
 

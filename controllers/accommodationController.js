@@ -4,13 +4,11 @@
  * Handles CRUD operations and image management for accommodations.
  * Uses factory functions for standard operations and custom logic for image deletion and host-specific listings.
  */
-
+const { bucket } = require('../firebaseAdmin');
 const Accommodation = require('../models/Accommodation');
 const APIFeatures = require('../utils/apiFeatures');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-const deleteAccommodationFolder = require('../utils/deleteAccomodationFolder');
-const { deleteFiles } = require('../utils/fsHelper');
 const factory = require('./handleFactory');
 
 // Place our controllers into an exports object
@@ -51,14 +49,22 @@ exports.deleteAccommodation = factory.deleteOne(Accommodation);
 exports.deleteAccommodationImages = catchAsync(async (req, res, next) => {
   const accommodation = await Accommodation.findById(req.params.id);
   if (!accommodation) return next();
+
   const { images = [] } = accommodation;
 
-  // ...existing code...
   if (images.length > 0) {
-    await deleteFiles(images);
-    await deleteAccommodationFolder(`uploads/accommodations/${req.params.id}`);
+    await Promise.all(
+      images.map(async ({ path }) => {
+        try {
+          await bucket.file(path).delete();
+          console.log(`🗑️ Deleted: ${path}`);
+        } catch (err) {
+          console.error(`❌ Failed to delete ${path}:`, err.message);
+        }
+      }),
+    );
   }
-  // ...existing code...
+
   next();
 });
 
@@ -67,15 +73,24 @@ exports.deleteAccommodationImages = catchAsync(async (req, res, next) => {
  * @route PATCH /api/accommodations/:id/images
  */
 exports.removeAccommodationImage = catchAsync(async (req, res, next) => {
+  const { imagePath } = req.body;
+
+  // 🔥 Step 1: Delete image from Firebase
+  try {
+    await bucket.file(imagePath).delete();
+    console.log(`🗑️ Deleted from Firebase: ${imagePath}`);
+  } catch (err) {
+    console.error(`❌ Failed to delete ${imagePath}:`, err.message);
+  }
+
+  // 🧾 Step 2: Remove image from accommodation.images array
   const accommodation = await Accommodation.findOneAndUpdate(
     {
       _id: req.params.id,
       host_id: req.user.id,
     },
-    { $pull: { images: req.body.imagePath } },
-    {
-      new: true,
-    },
+    { $pull: { images: { path: imagePath } } }, // match by path
+    { new: true },
   );
 
   if (!accommodation) {

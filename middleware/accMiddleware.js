@@ -14,7 +14,7 @@ const {
  * We use a different end point to upload images
  */
 exports.setDefaultImages = (req, res, next) => {
-  req.body.images = [''];
+  req.body.images = [{ path: '__', url: '__' }];
   next();
 };
 

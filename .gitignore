@@ -35,3 +35,4 @@ coverage/
 *.tgz
 
 commit-msg.txt
+serviceAccountKey.json

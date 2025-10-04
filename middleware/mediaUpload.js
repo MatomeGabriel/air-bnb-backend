@@ -1,5 +1,6 @@
 const { Types } = require('mongoose');
 const sharp = require('sharp');
+const { bucket } = require('../firebaseAdmin');
 
 const multer = require('multer');
 
@@ -26,32 +27,53 @@ const multerFilter = (req, file, cb) => {
 const upload = multer({ storage: multerStorage, fileFilter: multerFilter });
 
 exports.uploadAccommodationImages = upload.array('images', 10);
-// exports.uploadAccommodationImages = upload.fields([
-//   { name: 'images', maxCount: 10 },
-//   { name: 'amenities' },
-// ]);
+
 exports.uploadUserImage = upload.single('photo');
 
 exports.resizeUserImage = catchAsync(async (req, res, next) => {
-  // req.body.photo = '';
-  // if there is no image we go to the next
-
   if (!req.file) return next();
-  // delete this
-  req.tempUserId = new Types.ObjectId();
-  const id = req.user._id;
-  const fullPath = `uploads/users/${id}`;
-  await fsHelper.createFolder(fullPath);
 
-  const fileName = `user-${id}-${Date.now()}.jpeg`;
-  const imgUrl = `${fullPath}/${fileName}`;
-  await sharp(req.file.buffer)
+  const id = req.user._id;
+
+  // 🔥 Step 1: Delete old image if it exists
+  if (req.user.photoPath) {
+    try {
+      await bucket.file(req.user.photoPath).delete();
+      console.log(`🗑️ Deleted old image: ${req.user.photoPath}`);
+    } catch (err) {
+      console.error('❌ Failed to delete old image:', err.message);
+    }
+  }
+
+  // Step 2: Resize and upload new image
+  const fileName = `users/user-${id}-${Date.now()}.jpeg`;
+
+  const resizedBuffer = await sharp(req.file.buffer)
     .resize(300, 300)
     .toFormat('jpeg')
     .jpeg({ quality: 80, progressive: true, chromaSubsampling: '4:4:4' })
-    .toFile(imgUrl);
+    .toBuffer();
 
-  req.body.photo = imgUrl;
+  const blob = bucket.file(fileName);
+  const blobStream = blob.createWriteStream({
+    metadata: { contentType: 'image/jpeg' },
+  });
+
+  await new Promise((resolve, reject) => {
+    blobStream.on('error', reject);
+    blobStream.on('finish', resolve);
+    blobStream.end(resizedBuffer);
+  });
+
+  // 🔗 Step 3: Generate signed URL
+  const [url] = await blob.getSignedUrl({
+    action: 'read',
+    expires: '03-01-2030',
+  });
+
+  // 🧾 Step 4: Attach to request body
+  req.body.photo = url;
+  req.body.photoPath = fileName;
 
   next();
 });
@@ -66,25 +88,46 @@ exports.resizeAccommodationImages = catchAsync(async (req, res, next) => {
    */
   const { id } = req.params;
 
-  // 2. Create folder path dynamically
-  const fullPath = `uploads/accommodations/${id}`;
-  /**
-   *Create folder for this accommodation
-   */
-  await fsHelper.createFolder(fullPath);
+  // 2. Using Fire Storage
+
   await Promise.all(
     req.files.map(async (file, i) => {
-      // uploads/accommodations/accId
-      // uploads/users/userId
-      const filename = `accommodation-${id}-${Date.now()}-${i + 1}.jpeg`;
-      const imgUrl = `${fullPath}/${filename}`;
-      await sharp(file.buffer)
+      const filename = `accommodations/${id}/accommodation-${id}-${Date.now()}-${i + 1}.jpeg`;
+
+      // Resize image in memory
+      const resizedBuffer = await sharp(file.buffer)
         .resize(1440, 960, { fit: 'cover' })
         .toFormat('jpeg')
         .jpeg({ quality: 90, progressive: true, chromaSubsampling: '4:4:4' })
-        .toFile(imgUrl);
+        .toBuffer();
 
-      req.body.images.push(imgUrl);
+      console.log(`🖼️ Resized image ${i + 1}: ${resizedBuffer.length} bytes`);
+
+      // Upload to Firebase
+      const blob = bucket.file(filename);
+      const blobStream = blob.createWriteStream({
+        metadata: { contentType: 'image/jpeg' },
+      });
+
+      await new Promise((resolve, reject) => {
+        blobStream.on('error', (err) => {
+          console.log('FIrebase error', err);
+          reject(err);
+        });
+        blobStream.on('finish', resolve);
+        blobStream.end(resizedBuffer);
+      });
+
+      // Generate signed URL
+      const [url] = await blob.getSignedUrl({
+        action: 'read',
+        expires: '03-01-2030',
+      });
+
+      console.log(`✅ Uploaded image ${i + 1}:`, { path: filename, url });
+
+      // Push to req.body.images
+      req.body.images.push({ path: filename, url });
     }),
   );
 

@@ -53,11 +53,33 @@ const accommodationSchema = new mongoose.Schema({
   /**
    * Array of image file path.
    */
+  /**
   images: {
     type: [String],
     required: [true, 'Please provide at least one image'],
     validate: {
       validator: (arr) => Array.isArray(arr) && arr.length > 0,
+      message: 'Please provide at least one image',
+    },
+  },
+  **/
+
+  images: {
+    type: [
+      {
+        url: {
+          type: String,
+          required: true,
+        },
+        path: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
+    required: [true, 'Please provide at least one image'],
+    validate: {
+      validator: (arr) => !arr || (Array.isArray(arr) && arr.length > 0),
       message: 'Please provide at least one image',
     },
   },

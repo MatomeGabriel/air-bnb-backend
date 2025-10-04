@@ -180,14 +180,10 @@ exports.updateUserImage = catchAsync(async (req, res, next) => {
     req.user._id,
     {
       photo: req.body.photo,
+      photoPath: req.body.photoPath,
     },
     { new: true, runValidators: true },
   ).select('-_id');
-
-  // do the cleanup of all the images except the current one
-  console.log('Photo', req.body.photo);
-
-  await deleteUnmatchedImages(req.body.photo);
 
   // 3. send back the data not token, (the image is public data)
   res.status(200).json({

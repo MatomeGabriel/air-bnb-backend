@@ -37,6 +37,12 @@ mongoose
   .catch((err) => console.log(err));
 
 /**
+ * Connect to firebase before we can use our storage
+ */
+
+require('./firebaseAdmin');
+
+/**
  * Start Express server on configured port
  */
 const port = process.env.PORT || 8000;
