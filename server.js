@@ -1,7 +1,9 @@
 /**
- * Entry point for the backend server.
+ * @file server.js
+ * @description Entry point for the backend server.
  * - Loads environment variables
  * - Connects to MongoDB
+ * - Initializes Firebase Admin SDK
  * - Starts Express server
  * - Handles unhandled promise rejections
  */
@@ -20,6 +22,8 @@ const app = require('./app');
 
 /**
  * Build MongoDB connection string from environment variables
+ * Replaces <PASSWORD> placeholder with actual password
+ * @constant {string}
  */
 const DB = process.env.DATABASE.replace(
   '<PASSWORD>',
@@ -28,6 +32,7 @@ const DB = process.env.DATABASE.replace(
 
 /**
  * Connect to MongoDB using Mongoose
+ * Logs success or failure
  */
 mongoose
   .connect(DB)
@@ -37,13 +42,14 @@ mongoose
   .catch((err) => console.log(err));
 
 /**
- * Connect to firebase before we can use our storage
+ * Initialize Firebase Admin SDK
+ * Required before using Firebase Storage
  */
-
 require('./firebaseAdmin');
 
 /**
  * Start Express server on configured port
+ * @constant {number}
  */
 const port = process.env.PORT || 8000;
 const server = app.listen(port, () => {
@@ -51,7 +57,8 @@ const server = app.listen(port, () => {
 });
 
 /**
- * Handle unhandled promise rejections to gracefully shut down the server
+ * Handle unhandled promise rejections
+ * Gracefully shuts down the server and exits process
  */
 process.on('unhandledRejection', (err) => {
   console.log('UNHANDLED REJECTION! 🔥 Shutting down...');

@@ -1,13 +1,14 @@
 /**
- * Express Application Setup
- * Main entry point for configuring middleware, routes, error handling, and CORS for the backend API.
- * - Serves static files ( uploaded images )
+ * @file app.js
+ * @description Main entry point for configuring middleware, routes, error handling, and CORS for the backend API.
+ *
+ * Responsibilities:
+ * - Serves static files (uploaded images)
  * - Parses requests and cookies
  * - Configures CORS
  * - Registers API routes
  * - Handles errors and unknown routes
  */
-
 const express = require('express');
 const qs = require('qs');
 const path = require('path');
@@ -24,14 +25,14 @@ const userRoute = require('./routes/userRoutes');
 
 /**
  * Initialize Express app
+ * @constant {Express.Application}
  */
 const app = express();
 
 /**
- * Configures CORS middleware
- * Allows requests from specified origins and enables cookies for cross-origin requests.
+ * Configure CORS to allow requests from specified origins
+ * and enable credentials (cookies) for cross-origin requests.
  */
-
 const allowedOrigins = process.env.CLIENT_ORIGIN
   ? process.env.CLIENT_ORIGIN.split(',')
   : [];
@@ -54,12 +55,13 @@ app.use(
 
 /**
  * Use qs library for parsing query strings with depth of 1
+ * Allows nested query parameters like ?filter[price][gte]=100
  */
 app.set('query parser', (str) => qs.parse(str, { depth: 1 }));
 
 /**
  * Middleware Setup
- * - Serves static files from /uploads - images
+ * - Serves static files from /uploads
  * - Parses JSON and URL-encoded bodies
  * - Parses cookies
  */
@@ -75,7 +77,12 @@ app.use(cookieParser());
 app.use('/api/users', userRoute);
 app.use('/api/accommodations', accommodationRoute);
 app.use('/api/reservations', reservationRoute);
+
+/**
+ * Enable gzip compression for responses
+ */
 app.use(compression());
+
 /**
  * Catch-all for unhandled routes
  * Passes error to global error handler for unknown endpoints
@@ -83,9 +90,9 @@ app.use(compression());
 app.all('/{*any}', (req, res, next) => {
   next(new AppError(`Cannot find ${req.originalUrl} on this server`), 404);
 });
-
 /**
  * Global error handler middleware
+ * Handles all errors passed via next()
  */
 app.use(globalErrorHandler);
 

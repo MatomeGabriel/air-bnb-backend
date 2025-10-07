@@ -1,3 +1,8 @@
+/**
+ * Authentication and user-related controller functions.
+ * Handles signup, login, role assignment, route protection, user retrieval, and image updates.
+ */
+
 const jwt = require('jsonwebtoken');
 const { promisify } = require('util');
 
@@ -7,13 +12,26 @@ const User = require('../models/User');
 const { getOne } = require('../controllers/handleFactory');
 const deleteUnmatchedImages = require('../utils/deleteUnmatchedImages');
 
-// Returns a signed jwt token
+/**
+ * Signs a JWT token for a given user ID.
+ *
+ * @function signToken
+ * @param {string} id - User ID
+ * @returns {string} Signed JWT token
+ */
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 
-// Creates the token and send it back
+/**
+ * Creates and sends a JWT token via cookie, and returns user data in response.
+ *
+ * @function createAndSendToken
+ * @param {Object} user - User document
+ * @param {number} statusCode - HTTP status code
+ * @param {Object} res - Express response object
+ */
 const createAndSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
 
@@ -37,10 +55,14 @@ const createAndSendToken = (user, statusCode, res) => {
   });
 };
 
-// Signup function to create a new user
-// This function will be used to create a new user
-// It will also set the role of the user based on the request
-
+/**
+ * Signs up a new user and sends back a JWT token.
+ *
+ * @function signUp
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ */
 exports.signUp = catchAsync(async (req, res, next) => {
   // Creates a new user
 
@@ -58,7 +80,14 @@ exports.signUp = catchAsync(async (req, res, next) => {
   createAndSendToken(newUser, 201, res);
 });
 
-// To Login Users
+/**
+ * Logs in a user and returns a JWT token.
+ *
+ * @function login
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ */
 exports.login = catchAsync(async (req, res, next) => {
   const { username, password } = req.body;
 
@@ -82,8 +111,13 @@ exports.login = catchAsync(async (req, res, next) => {
   createAndSendToken(user, 200, res);
 });
 
-// To set the role of the user
-// THis middleware is used to set roles, roles can either be user or host
+/**
+ * Middleware to set a specific role on the request body.
+ *
+ * @function setRole
+ * @param {string} role - Role to assign (e.g., 'user', 'host')
+ * @returns {Function} Express middleware
+ */
 exports.setRole = (role) => (req, res, next) => {
   if (!req.body)
     return next(new AppError('Please provide necessary data', 400));
@@ -93,6 +127,14 @@ exports.setRole = (role) => (req, res, next) => {
   next();
 };
 
+/**
+ * Middleware to protect routes by verifying JWT token.
+ *
+ * @function protect
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ */
 exports.protect = catchAsync(async (req, res, next) => {
   // This function will be used to protect the routes
   // It will check if the user is authenticated
@@ -135,6 +177,13 @@ exports.protect = catchAsync(async (req, res, next) => {
   next();
 });
 
+/**
+ * Logs out the user by clearing the JWT cookie.
+ *
+ * @function logout
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 exports.logout = (req, res) => {
   res.cookie('jwt', 'loggedout', {
     expires: new Date(Date.now() + 10 * 1000),
@@ -145,7 +194,14 @@ exports.logout = (req, res) => {
     status: 'success',
   });
 };
-// to restrict users based on their roles
+
+/**
+ * Middleware to restrict access based on user roles.
+ *
+ * @function restrictTo
+ * @param {...string} roles - Allowed roles
+ * @returns {Function} Express middleware
+ */
 exports.restrictTo =
   (...roles) =>
   (req, res, next) => {
@@ -159,19 +215,47 @@ exports.restrictTo =
     next();
   };
 
-// sets the user host id
+/**
+ * Middleware to set the host ID on the request body.
+ *
+ * @function setHostId
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ */
 exports.setHostId = (req, res, next) => {
   req.body.host_id = req.user._id;
   next();
 };
 
+/**
+ * Middleware to set the current user's ID on the request params.
+ *
+ * @function getMe
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ */
 exports.getMe = (req, res, next) => {
   req.params.id = req.user._id;
   next();
 };
 
+/**
+ * Retrieves a user by ID using a generic factory handler.
+ *
+ * @function getUser
+ */
 exports.getUser = getOne(User);
 
+/**
+ * Updates the current user's image and returns public data.
+ *
+ * @function updateUserImage
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ */
 exports.updateUserImage = catchAsync(async (req, res, next) => {
   // 1. cleanup prev images
 
@@ -194,6 +278,14 @@ exports.updateUserImage = catchAsync(async (req, res, next) => {
   });
 });
 
+/**
+ * Retrieves public host data by host ID.
+ *
+ * @function getHost
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ */
 exports.getHost = catchAsync(async (req, res, next) => {
   const { host_id } = req.params;
 

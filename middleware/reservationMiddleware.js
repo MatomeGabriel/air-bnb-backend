@@ -1,9 +1,19 @@
+/**
+ * Middleware for enriching requests with user and host context,
+ * and for scoping queries based on user roles.
+ */
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const Accommodation = require('../models/Accommodation');
 
 /**
- * Append the user_id from the cookie, prevents people from putting their own user_id
+ * Appends the authenticated user's ID, name, and username to the request body.
+ * Prevents clients from spoofing `user_id` manually.
+ *
+ * @function appendUserId
+ * @param {Object} req - Express request object (must include `req.user`)
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
  */
 exports.appendUserId = catchAsync(async (req, res, next) => {
   if (!req.user) return next(new AppError('Please signup', 400));
@@ -15,6 +25,19 @@ exports.appendUserId = catchAsync(async (req, res, next) => {
   next();
 });
 
+/**
+ * Appends the host's username to the request body based on accommodation ID.
+ * Requires `req.body._id` to identify the accommodation.
+ *
+ * @function appendHostIdAndUsername
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ * @throws {AppError} If accommodation ID is missing
+ *
+ * @note ⚠️ Logic issue: `Accommodation.find({ id: ... })` should likely be `findById(...)`
+ *       Also, `user.username` will not exist on an array result — needs fix.
+ */
 exports.appendHostIdAndUsername = catchAsync(async (req, res, next) => {
   if (!req.body._id)
     return next(new AppError('Please provide the accommodation ID', 401));
@@ -27,6 +50,15 @@ exports.appendHostIdAndUsername = catchAsync(async (req, res, next) => {
   next();
 });
 
+/**
+ * Sets a scoped query object (`req.queryId`) based on the user's role.
+ * Hosts get `host_id`, users get `user_id`.
+ *
+ * @function setQueryId
+ * @param {Object} req - Express request object (must include `req.user`)
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ */
 exports.setQueryId = catchAsync(async (req, res, next) => {
   if (!req.user)
     return next(
@@ -40,4 +72,15 @@ exports.setQueryId = catchAsync(async (req, res, next) => {
   next();
 });
 
-exports.isReservationAvailable = catchAsync(async (req, res, next) => {});
+/**
+ * Placeholder middleware to check if a reservation is available.
+ * Currently not implemented.
+ *
+ * @function isReservationAvailable
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ */
+exports.isReservationAvailable = catchAsync(async (req, res, next) => {
+  // TODO: Implement reservation availability logic
+});

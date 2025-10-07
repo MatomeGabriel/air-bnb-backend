@@ -1,8 +1,47 @@
 /**
- * Reservation Model
- * Defines the schema for reservations, including user, accommodation, dates, and status.
+ * @file Reservation Model
+ * @description Defines the schema for reservations, including user, accommodation details, booking dates, pricing, and ratings.
  */
 const mongoose = require('mongoose');
+
+/**
+ * @typedef {Object} SpecificRatings
+ * @property {number} cleanliness - Cleanliness rating
+ * @property {number} communication - Communication rating
+ * @property {number} checkIn - Check-in experience rating
+ * @property {number} accuracy - Accuracy of listing rating
+ * @property {number} location - Location rating
+ * @property {number} value - Value-for-money rating
+ */
+
+/**
+ * @typedef {Object} Reservation
+ * @property {string} title - Accommodation name
+ * @property {string} [description] - Optional description
+ * @property {'Entire Unit'|'Room'|'Whole Villa'} type - Type of accommodation
+ * @property {'Cape Town'|'Paris'|'New York'|'Tokyo'|'London'|'Barcelona'|'Rome'|'Sydney'|'Dubai'|'Bangkok'} location - Location of accommodation
+ * @property {string[]} images - Array of image URLs
+ * @property {number} maxGuests - Maximum number of guests
+ * @property {number} bedrooms - Number of bedrooms
+ * @property {number} [rating] - Average rating
+ * @property {number} [reviews] - Number of reviews
+ * @property {number} price - Price per night
+ * @property {boolean} [enhancedCleaning=true] - Whether enhanced cleaning is offered
+ * @property {boolean} [selfCheckIn=true] - Whether self check-in is available
+ * @property {string[]} [amenities] - List of amenities
+ * @property {mongoose.ObjectId} host_id - Reference to host user
+ * @property {Date} checkIn - Check-in date
+ * @property {Date} checkOut - Check-out date
+ * @property {string} [host] - Host name
+ * @property {mongoose.ObjectId} user_id - Reference to booking user
+ * @property {string} [user] - User name
+ * @property {string} [username] - Username of booking user
+ * @property {number} [weeklyDiscount] - Weekly discount amount
+ * @property {number} [cleaningFee] - Cleaning fee
+ * @property {number} [serviceFee] - Service fee
+ * @property {number} [occupancyTaxes] - Occupancy taxes
+ * @property {SpecificRatings} specificRatings - Detailed rating breakdown
+ */
 
 const reservationSchema = new mongoose.Schema(
   {

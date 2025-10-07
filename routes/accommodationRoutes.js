@@ -1,7 +1,8 @@
 /**
- * Accommodation Routes
- * Defines RESTful routes for accommodation CRUD operations and image management.
+ * @file Accommodation Routes
+ * @description Defines RESTful routes for accommodation CRUD operations and image management.
  */
+
 const express = require('express');
 
 const accommodationController = require('../controllers/accommodationController');
@@ -11,19 +12,20 @@ const accMiddleware = require('../middleware/accMiddleware');
 
 const router = express.Router();
 
-// router.route('/').get(accommodationController.getAllAccommodations).post(
-//   auth.protect,
-//   auth.restrictTo('host', 'super-admin'),
-//   // ,
-//   mediaUpload.uploadAccommodationImages,
-//   /**
-//    * We need to set the host Id after our multer have parsed req.body
-//    * Otherwise the req.body is undefined
-//    */
-//   auth.setHostId,
-//   mediaUpload.resizeAccommodationImages,
-//   accommodationController.createAccommodation,
-// );
+/**
+ * @route GET /
+ * @desc Get all accommodations
+ * @access Public
+ *
+ * @route POST /
+ * @desc Create a new accommodation
+ * @access Protected (host, super-admin)
+ * @middleware auth.protect - Authenticate user
+ * @middleware auth.restrictTo - Restrict to host or super-admin
+ * @middleware auth.setHostId - Attach host ID after multer parsing
+ * @middleware accMiddleware.setDefaultImages - Set placeholder image array
+ * @middleware accMiddleware.setReviewsAndRatings - Generate mock reviews and ratings
+ */
 
 router
   .route('/')
@@ -37,20 +39,47 @@ router
     accommodationController.createAccommodation,
   );
 
-router.get('/:id', accommodationController.getAccommodation);
-//  Get a single accommodation
-// Delete an accommodation based on the ID
-
-router.get('/locations/summary', accommodationController.getLocationsSummary);
 /**
- * Protects all the routes
+ * @route GET /:id
+ * @desc Get a single accommodation by ID
+ * @access Public
+ */
+router.get('/:id', accommodationController.getAccommodation);
+
+/**
+ * @route GET /locations/summary
+ * @desc Get summary of accommodation locations
+ * @access Public
+ */
+router.get('/locations/summary', accommodationController.getLocationsSummary);
+
+/**
+ * Protect all routes below this line
+ * @middleware auth.protect - Authenticate user
+ * @middleware auth.restrictTo - Restrict to host or super-admin
  */
 router.use(auth.protect, auth.restrictTo('host', 'super-admin'));
 
+/**
+ * @route GET /host/listings
+ * @desc Get all accommodations listed by the current host
+ * @access Protected (host, super-admin)
+ */
 router
   .route('/host/listings')
   .get(accommodationController.getAllHostAccommodations);
 
+/**
+ * @route PATCH /:id
+ * @desc Update accommodation by ID
+ * @access Protected (host, super-admin)
+ * @middleware accMiddleware.stripImagesFromBody - Prevent image updates via this route
+ * @middleware accMiddleware.stripLocationFromBody - Prevent location updates via this route
+ *
+ * @route DELETE /:id
+ * @desc Delete accommodation and its images
+ * @access Protected (host, super-admin)
+ */
 router
   .route('/:id')
   .patch(
@@ -63,7 +92,24 @@ router
     accommodationController.deleteAccommodation,
   );
 
-// for Images
+/**
+ * @route POST /:id/images
+ * @desc Upload new accommodation images (replace or append)
+ * @access Protected (host, super-admin)
+ * @middleware mediaUpload.uploadAccommodationImages - Multer image upload
+ * @middleware accMiddleware.isAccommodationAvailable - Validate ownership
+ * @middleware mediaUpload.resizeAccommodationImages - Resize and upload to Firebase
+ * @middleware accommodationController.updateAccommodation - Save image metadata
+ *
+ * @route PATCH /:id/images
+ * @desc Append new images to existing accommodation
+ * @access Protected (host, super-admin)
+ * @middleware mediaUpload.updateAccommodationImages - Determine replace/append mode
+ *
+ * @route DELETE /:id/images
+ * @desc Delete a specific accommodation image
+ * @access Protected (host, super-admin)
+ */
 router
   .route('/:id/images')
   .post(

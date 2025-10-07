@@ -1,10 +1,23 @@
 /**
- * User Model
- * Defines the schema for users, including authentication, profile, and role information.
+ * @file User Model
+ * @description Defines the schema for users, including authentication, profile, and role information.
  */
+
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
+
+/**
+ * @typedef {Object} User
+ * @property {string} name - Full name of the user
+ * @property {string} email - Unique email address, validated and lowercased
+ * @property {string} username - Unique username
+ * @property {string} [photo] - Public URL or path to profile photo
+ * @property {string} [photoPath] - Internal storage path for photo
+ * @property {'user'|'host'} role - Role assigned to the user
+ * @property {string} password - Hashed password (not selected by default)
+ * @property {string} passwordConfirm - Must match the password on creation
+ */
 
 // This is our User Schema
 const userSchema = new mongoose.Schema({
@@ -55,6 +68,15 @@ const userSchema = new mongoose.Schema({
 // this is for the password encryption
 // We use the document middleware to encrypt our password
 // right before we save or create our document
+
+/**
+ * Pre-save middleware to hash password before saving.
+ * Only runs if password is modified.
+ *
+ * @function
+ * @memberof userSchema
+ * @param {Function} next - Express next middleware function
+ */
 userSchema.pre('save', async function (next) {
   // only run if the password was actually modified
   if (!this.isModified('password')) {
@@ -73,7 +95,15 @@ userSchema.pre('save', async function (next) {
 
 // Static/Instance method for password comparison
 
-// --------- Explain it well
+/**
+ * Compares a candidate password with the hashed password stored in the database.
+ *
+ * @function correctPassword
+ * @memberof userSchema.methods
+ * @param {string} candidatePassword - Plain text password entered by user
+ * @param {string} userPassword - Hashed password from database
+ * @returns {Promise<boolean>} Whether the passwords match
+ */
 userSchema.methods.correctPassword = async function (
   candidatePassword,
   userPassword,

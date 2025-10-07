@@ -1,21 +1,30 @@
-const { Types } = require('mongoose');
+/**
+ * Middleware for handling image uploads, resizing, and Firebase storage.
+ * Supports user profile images and accommodation gallery uploads.
+ */
 const sharp = require('sharp');
-const { bucket } = require('../firebaseAdmin');
-
 const multer = require('multer');
+const { bucket } = require('../firebaseAdmin');
 
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const fsHelper = require('../utils/fsHelper');
 const Accommodation = require('../models/Accommodation');
-const deleteAccommodationFolder = require('../utils/deleteAccomodationFolder');
 
 /**
- * Create memory storage to save our images on memory
- * We will work on this images late such as resizing them
+ * Multer memory storage configuration.
+ * Stores uploaded files in memory for further processing.
  */
 const multerStorage = multer.memoryStorage();
 
+/**
+ * Multer file filter to allow only image uploads.
+ *
+ * @function multerFilter
+ * @param {Object} req - Express request object
+ * @param {Object} file - Uploaded file object
+ * @param {Function} cb - Callback to signal acceptance or rejection
+ */
 const multerFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image')) {
     cb(null, true);
@@ -26,10 +35,20 @@ const multerFilter = (req, file, cb) => {
 
 const upload = multer({ storage: multerStorage, fileFilter: multerFilter });
 
+/**
+ * Multer middleware to handle multiple accommodation images.
+ * Accepts up to 10 images under the field name 'images'.
+ */
 exports.uploadAccommodationImages = upload.array('images', 10);
 
 exports.uploadUserImage = upload.single('photo');
 
+/**
+ * Resizes and uploads user profile image to Firebase.
+ * Deletes previous image if it exists and attaches new URL and path to request body.
+ *
+ * @function resizeUserImage
+ */
 exports.resizeUserImage = catchAsync(async (req, res, next) => {
   if (!req.file) return next();
 
@@ -78,6 +97,12 @@ exports.resizeUserImage = catchAsync(async (req, res, next) => {
   next();
 });
 
+/**
+ * Resizes and uploads accommodation images to Firebase.
+ * Stores signed URLs and paths in `req.body.images`.
+ *
+ * @function resizeAccommodationImages
+ */
 exports.resizeAccommodationImages = catchAsync(async (req, res, next) => {
   // Set Images to an empty array
   req.body.images = [];
@@ -145,6 +170,12 @@ exports.resizeAccommodationImages = catchAsync(async (req, res, next) => {
 // generate our image urls
 // then we append and save the images on the server
 
+/**
+ * Determines whether to replace or append accommodation images.
+ * If replacing, deletes existing images from Firebase.
+ *
+ * @function updateAccommodationImages
+ */
 exports.updateAccommodationImages = catchAsync(async (req, res, next) => {
   if (!req.body.mode || req.body.mode === 'replace') {
     req.body.mode = 'replace';
@@ -153,10 +184,5 @@ exports.updateAccommodationImages = catchAsync(async (req, res, next) => {
     return next();
   }
   req.body.mode = 'append';
-  next();
-});
-
-exports.deleteAccommodationImage = catchAsync(async (req, res, next) => {
-  await fsHelper.deleteFiles([`${req.body.imagePath}`]);
   next();
 });

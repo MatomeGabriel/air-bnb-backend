@@ -1,8 +1,35 @@
 /**
- * Accommodation Model
- * Defines the schema for accommodation listings, including host, location, amenities, images, and pricing.
+ * @file Accommodation Model
+ * @description Defines the schema for accommodation listings, including host, location, amenities, images, and pricing.
  */
 const mongoose = require('mongoose');
+
+/**
+ * @typedef {Object} Image
+ * @property {string} url - Public URL of the image
+ * @property {string} path - Internal storage path of the image
+ */
+
+/**
+ * @typedef {Object} Accommodation
+ * @property {string} title - Unique title of the accommodation listing
+ * @property {string} [description] - Optional description for guests
+ * @property {'Entire Unit'|'Room'|'Whole Villa'} type - Type of accommodation
+ * @property {'Cape Town'|'Paris'|'New York'|'Tokyo'|'London'|'Barcelona'|'Rome'|'Sydney'|'Dubai'|'Bangkok'} location - Predefined location
+ * @property {Image[]} images - Array of image objects with URL and path
+ * @property {number} maxGuests - Maximum number of guests allowed
+ * @property {number} bedrooms - Number of bedrooms
+ * @property {number} bathrooms - Number of bathrooms
+ * @property {number} beds - Number of beds
+ * @property {number} [rating] - Average rating
+ * @property {number} [reviews] - Number of reviews
+ * @property {number} price - Price per night
+ * @property {boolean} [enhancedCleaning=true] - Whether enhanced cleaning is offered
+ * @property {boolean} [selfCheckIn=true] - Whether self check-in is available
+ * @property {string[]} [amenities] - List of amenities
+ * @property {mongoose.ObjectId} host_id - Reference to the host user
+ */
+
 /**
  * Accommodation Schema
  * Represents a listing with location, pricing, hosting options, and availability

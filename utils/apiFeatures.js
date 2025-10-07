@@ -1,63 +1,25 @@
 /**
- * APIFeatures Utility
- * Provides filtering, sorting, and pagination for Mongoose queries based on request parameters.
+ * @file APIFeatures Utility
+ * @description Provides filtering, sorting, and field limiting for Mongoose queries based on request parameters.
  */
 class APIFeatures {
+  /**
+   * Creates an instance of APIFeatures.
+   * @param {Object} query - Mongoose query object
+   * @param {Object} queryString - Express request query parameters
+   */
   constructor(query, queryString) {
     this.query = query;
     this.queryString = queryString;
   }
 
-  // to filter our results
-  // to exclude other things based on what we pass
-  // filter() {
-  //   const queryObj = { ...this.queryString };
-  //   const excludedFields = ['page', 'sort', 'limit', 'fields'];
-  //   // remove this excluded fields on our query string
-
-  //   excludedFields.forEach((el) => delete queryObj[el]);
-
-  //   //  Advanced Filtering
-  //   // 1B) convert the object into a string, by stringifying it
-  //   // replace the gt, gte, lt, lte by appending the $ e.g gte -> $gte
-  //   let queryString = JSON.stringify(queryObj);
-  //   queryString = queryString.replace(
-  //     /\b(gte|gt|lte|lt)\b/g,
-  //     (match) => `$${match}`,
-  //   );
-  //
-
-  //   // over ride our initial query
-  //   this.query = this.query.find(JSON.parse(queryString));
-  //
-  //   return this;
-  // }
-
-  // filter() {
-  //   const queryObj = { ...this.queryString };
-  //   const excludedFields = ['page', 'sort', 'limit', 'fields'];
-
-  //   excludedFields.forEach((field) => delete queryObj[field]);
-
-  //   const mongoFilter = Object.entries(queryObj).reduce((acc, [key, value]) => {
-  //     if (value && typeof value === 'object') {
-  //       acc[key] = Object.entries(value).reduce((nestedAcc, [op, val]) => {
-  //         const mongoOp = ['gte', 'gt', 'lte', 'lt'].includes(op)
-  //           ? `$${op}`
-  //           : op;
-  //         nestedAcc[mongoOp] = isNaN(val) ? val : Number(val);
-  //         return nestedAcc;
-  //       }, {});
-  //     } else {
-  //       acc[key] = value;
-  //     }
-  //     return acc;
-  //   }, {});
-
-  //
-  //   this.query = this.query.find(mongoFilter);
-  //   return this;
-  // }
+  /**
+   * Filters the query based on request parameters.
+   * Supports advanced filtering with operators: gte, gt, lte, lt.
+   * Excludes reserved fields: page, sort, limit, fields.
+   *
+   * @returns {APIFeatures} The current APIFeatures instance
+   */
 
   filter() {
     const queryObj = { ...this.queryString };
@@ -79,6 +41,14 @@ class APIFeatures {
     return this;
   }
 
+  /**
+   * Sorts the query results based on request parameters.
+   * Supports multiple fields separated by commas.
+   * Defaults to descending `createdAt` if no sort is provided.
+   *
+   * @returns {APIFeatures} The current APIFeatures instance
+   */
+
   sort() {
     if (this.queryString.sort) {
       const sortBy = this.queryString.sort.split(',').join(' ');
@@ -92,6 +62,13 @@ class APIFeatures {
     return this;
   }
 
+  /**
+   * Limits the fields returned in the query results.
+   * Supports comma-separated field selection.
+   * Defaults to excluding `__v` if no fields are specified.
+   *
+   * @returns {APIFeatures} The current APIFeatures instance
+   */
   limitFields() {
     if (this.queryString.fields) {
       const fields = this.queryString.fields.split(',').join(' ');

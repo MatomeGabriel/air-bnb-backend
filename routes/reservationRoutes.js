@@ -1,7 +1,8 @@
 /**
- * Reservation Routes
- * Defines RESTful routes for reservation CRUD operations and host/user-specific queries.
+ * @file Reservation Routes
+ * @description Defines RESTful routes for reservation CRUD operations and host/user-specific queries.
  */
+
 const express = require('express');
 const auth = require('../middleware/auth');
 const reservationController = require('../controllers/reservationController');
@@ -9,17 +10,25 @@ const reservationMiddleware = require('../middleware/reservationMiddleware');
 
 const router = express.Router();
 
-// when creating the reservation you must b
 /**
- * 1. logged in - get the id from the cookie,
- * - append user id
- * 2. get the host id from the listing id (query fro the )
- * 3. Save the reservation
- * 4. send back the reservation
+ * Middleware to protect all reservation routes.
+ * Ensures user is authenticated before accessing any endpoint.
  */
 
 router.use(auth.protect);
 
+/**
+ * @route GET /
+ * @desc Get reservations for the current user or host
+ * @access Protected
+ * @middleware reservationMiddleware.setQueryId - Scopes query based on user role
+ *
+ * @route POST /
+ * @desc Create a new reservation
+ * @access Protected
+ * @middleware reservationMiddleware.appendUserId - Appends user ID from auth context
+ * @middleware reservationController.createReservation - Saves reservation and returns it
+ */
 router
   .route('/')
   .get(reservationMiddleware.setQueryId, reservationController.getReservations)
@@ -28,7 +37,12 @@ router
     reservationController.createReservation,
   );
 
-// Delete an accommodation based on the ID
+/**
+ * @route DELETE /:id
+ * @desc Delete a reservation by ID
+ * @access Protected
+ * @middleware reservationMiddleware.setQueryId - Ensures user owns the reservation
+ */
 router
   .route('/:id')
   .delete(
