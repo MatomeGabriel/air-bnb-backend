@@ -43,7 +43,10 @@ const createAndSendToken = (user, statusCode, res) => {
     httpOnly: true,
   };
 
-  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+  if (process.env.NODE_ENV === 'production') {
+    cookieOptions.secure = true;
+    cookieOptions.sameSite = 'None';
+  }
   // We need to send the jwt as a cookie, no saving in the local storage
   res.cookie('jwt', token, cookieOptions);
   // We do not want to send the password back
@@ -122,8 +125,11 @@ exports.setRole = (role) => (req, res, next) => {
   if (!req.body)
     return next(new AppError('Please provide necessary data', 400));
 
+  console.log('About to set roles to', req.body.role);
   // Set the role
   req.body.role = role;
+
+  console.log(req.body.role);
   next();
 };
 
