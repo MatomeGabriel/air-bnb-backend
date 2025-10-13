@@ -46,7 +46,6 @@ const createAndSendToken = (user, statusCode, res) => {
   if (process.env.NODE_ENV === 'production') {
     cookieOptions.secure = true;
     cookieOptions.sameSite = 'None';
-    cookieOptions.path = '/';
   }
   // We need to send the jwt as a cookie, no saving in the local storage
   res.cookie('jwt', token, cookieOptions);
@@ -195,6 +194,9 @@ exports.logout = (req, res) => {
   res.cookie('jwt', 'loggedout', {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+    path: '/', // must match original
   });
 
   res.status(200).json({
